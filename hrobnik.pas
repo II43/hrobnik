@@ -1,5 +1,4 @@
-program HROBNIK;
-{program urceny ke sprave hrbitova}
+program HROBNIK; {program urceny ke sprave hrbitova}
 
 uses Crt;
 
@@ -25,11 +24,11 @@ end;
 
 type TSoubor = file of TNeboztik;
 
-var soubor:TSoubor;
-var a_jmenosouboru:string;
-var konec:boolean;
-var soubor_otevren:boolean;
-var pn:integer;
+var soubor:TSoubor;        		{globalni soubor, ktery je prave otevreny}
+var a_jmenosouboru:string;  	{jmeno prave otevreneho souboru}
+var konec:boolean;		{ukonceni programu ANO/NE}
+var soubor_otevren:boolean;             {otevren nejaky soubor ANO/NE}
+var pn:integer;			{celkovy pocet neboztiku v prave otevrenem souboru}
 
 var ch_z,i_z:boolean; {promenne pro kontrolovani vypisu chybove a informativni zpravy}
 var ch_zprava,i_zprava:string; {zpravy samotne}
@@ -76,7 +75,7 @@ begin
   write(datum.den:2,'.',datum.mesic:2,'.',datum.rok:4);
 end;
 
-procedure VypisNeboztika(n:TNeboztik); 	{vypise udaje o danem neboztikovi n na jeden radek a odradkuje}
+procedure VypisNeboztika(n:TNeboztik); {vypise udaje o danem neboztikovi n na jeden radek a odradkuje}
 begin
   write(n.id:4,n.jmeno:15,n.prijmeni:15,'':5);
   VypisDatum(n.datum_narozeni);
@@ -166,7 +165,6 @@ begin
   d.rok := 2000;
 end;
 
-
 procedure ZadejNeboztika(var n:TNeboztik;id:integer); {zadavani neboztika do jedne radky}
 var radka:integer;
 var sdatum:string;
@@ -211,7 +209,8 @@ function HMENU:integer; {vraci zvolenou volbu}
 var volba:integer;
 begin
   write(' HROBNIK 1.0 - AKTUALNE OTEVRENY SOUBOR: ',a_jmenosouboru);
-  if (soubor_otevren = TRUE) then writeln(' ( ',pn,')')
+  if (soubor_otevren = TRUE) then writeln(' (',pn,')')
+  {zde nekde by bylo vypsani informativni a chybove zpravy,neni dodelano, ale pokud by to bylo nutne lze na pozadani dodelat}
   else writeln;
   writeln;
   writeln(' volba       funkce');
@@ -232,9 +231,8 @@ begin
   writeln('   15        setrideni podle identifikacniho cisla (0-X)');
   writeln('   16        prohozeni dvou zaznamu podle poradi (1-X) ');
   writeln('   17        smazani zaznamu podle identifikacniho cisla neboztika (0-X)');
-  writeln('   18        zmena zazbamu podle identifikacniho cisla neboztika (0-X)');
-  writeln('   19        zavri stavajici soubor');
-  writeln('   20        ukonci program');
+  writeln('   18        zavri stavajici soubor');
+  writeln('   19        ukonci program');
   writeln;
   write('zadejte volbu: '); readln(volba);
   HMENU:=volba;
@@ -513,12 +511,6 @@ end;
 
 {#M MAZANI ZAZNAMU PODLE KLICE}
 
-
-procedure SmazZaznam(var soubor:TSoubor;z:integer);
-begin
-
-end;
-
 procedure SmazNeboztikaPodleId(var soubor:TSoubor;id:integer);
 var dsoubor:TSoubor;n:TNeboztik;
 begin
@@ -540,30 +532,6 @@ begin
   ZAVRISOUBOR(dsoubor);
   erase(dsoubor);
 end;
-
-{ZMENENI ZAZNAMU PODLE KLICE}
-
-procedure ZmenNeboztikaPodleId(var soubor:TSoubor;id:integer);
-var ns,nn:TNeboztik;p:integer;nasel_neboztika:boolean;
-begin
-  nasel_neboztika := FALSE;
-  seek(soubor,0);
-  while not eof(soubor) or nasel_neboztika do begin
-    read(soubor,ns);
-    if ns.id = id then begin
-      nasel_neboztika := TRUE;
-      p := filepos(soubor);
-    end; 
-  end;
-  VypisZahlaviProVypisNeboztika;
-  VypisNeboztika(ns);
-  writeln;
-  VypisZahlaviProZadavaniNeboztika;
-  ZadejNeboztika(nn,ns.id);
-  seek(soubor,p);
-  write(soubor,nn);
-end;
-
 
 {JINE}
 
@@ -751,23 +719,14 @@ begin
   SmazNeboztikaPodleId(soubor,n);
 end;
 
-procedure V18; {editace zaznamu podle identifikacniho cisla daneho neboztika}
-var n:integer;
-begin
-  clrscr;
-  writeln('EDITACE ZAZNAMU PODLE IDENTIFIKACNIHO CISLA NEBOZTIKA');
-  write('zadejte identifikacni cislo neboztika u ktereho chcete zmenit udaje: '); readln(n);
-  ZmenNeboztikaPodleId(soubor,n);
-end;
-
-procedure V19; {zavreni prave otevreneho souboru}
+procedure V18; {zavreni prave otevreneho souboru}
 begin
   ZAVRISOUBOR(soubor);
   a_jmenosouboru := 'zadny';
   soubor_otevren := FALSE;
 end;
 
-procedure V20; {ukonceni programu}
+procedure V19; {ukonceni programu}
 begin 
    konec := TRUE; 
 end;
@@ -776,80 +735,40 @@ end;
 
 procedure VOLBA(v:integer);
 begin
-  if v = 1 then V1; {zavola proceduru pro otevreni noveho souboru}
-  if v = 2 then V2; {zavola procedure pro otevreni existujiciho souboru}
-  if v = 3 then begin 
-    if soubor_otevren = TRUE then V3 {zavola proceduru pro pridavani neboztika}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 4 then begin 
-    if soubor_otevren = TRUE then V4 {zavola proceduru pro vypis vsech neboztiku}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 5 then begin 
-    if soubor_otevren = TRUE then V5 {zavola proceduru pro vyhledani neboztiku ze souboru podle prijmeni}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 6 then begin 
-    if soubor_otevren = TRUE then V6 {zavola proceduru pro vyhledani neboztiku ze souboru podle jmena}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 7 then begin 
-    if soubor_otevren = TRUE then V7 {zavola proceduru pro vyhledani neboztiku ze souboru podle datumu narozeni}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 8 then begin 
-    if soubor_otevren = TRUE then V8 {zavola proceduru pro vyhledani neboztiku ze souboru podle datumu umrti}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 9 then begin 
-    if soubor_otevren = TRUE then V9 {zavola proceduru pro vyhledani neboztiku ze souboru podle cisla hrobu}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 10 then begin 
-    if soubor_otevren = TRUE then V10 {zavola proceduru pro serazeni neboztiku abecedne podle prijmeni}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;
-  if v = 11 then begin 
-    if soubor_otevren = TRUE then V11 {zavola proceduru pro serazeni neboztiku abecedne podle jmena}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;  
-  if v = 12 then begin 
-    if soubor_otevren = TRUE then V12 {zavola proceduru pro serazeni neboztiku  podle datumu narozeni}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;  
-  if v = 13 then begin 
-    if soubor_otevren = TRUE then V13 {zavola proceduru pro serazeni neboztiku  podle datumu umrti}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 14 then begin 
-    if soubor_otevren = TRUE then V14 {zavola proceduru pro serazeni neboztiku podle cisel hrobu}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 15 then begin 
-    if soubor_otevren = TRUE then V15 {zavola proceduru pro serazeni neboztiku podle jejich identifikacnich cisel}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 16 then begin 
-    if soubor_otevren = TRUE then V16 {zavola proceduru pro prohozeni dvou neboztiku podle jejich poradi}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 17 then begin 
-    if soubor_otevren = TRUE then V17 {zavola proceduru pro smazani neboztika podle jeho identifikacniho cisla}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 18 then begin 
-    if soubor_otevren = TRUE then V18 {zavola proceduru pro zmenu neboztika podle jeho identifikacniho cisla}
-    else ChybovaZprava('nejdrive musite otevrit nejaky soubor');
-  end;   
-  if v = 19 then V19;
-  if v = 20 then V20;
+  case soubor_otevren of
+    FALSE: begin
+ 	    case v of
+	      1: V1;
+ 	      2: V2;
+	      18: V18;
+	      19: V19;
+  	    end;
+	  end;
+    TRUE: begin
+	  case v of
+	    1: V1;
+	    2: V2;
+	    3: V3;
+	    4: V4;
+	    5: V5;
+	    6: V6;
+	    7: V7;
+	    8: V8;
+	    9: V9;
+	    10: V10;
+	    11: V11;
+	    12: V12;
+	    13: V13;
+	    14: V14;
+	    15: V15;
+	    16: V16;
+	    17: V17;
+	    18: V18;
+	    19: V19;
+	  end;
+	end;   
+  end; 
 end;
-
-
-{FUNKCE}
-
-
 
 var i:integer;
 
@@ -858,8 +777,8 @@ begin
  soubor_otevren := FALSE;
  a_jmenosouboru := 'zadny';
  konec:=FALSE;
- ch_z := FALSE;
- i_z := TRUE; i_zprava := 'budte srdecne vitani a preji hodne trpelivosti a nebeskeho klidu'; 
+ ch_z := FALSE; {nastavi vypis chybove zpravy na FALSE}
+ i_z := FALSE;  {nastavi vypis informativni zpravy na FALSE}
  while konec = FALSE do begin
    clrscr;
    i := HMENU;
